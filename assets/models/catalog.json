@@ -3,10 +3,10 @@
     {
       "id": "usdz-mobile-globe-detail-fixed",
       "name": "USDZ Mobile Globe Detail Fixed",
-      "project": "EOS article",
-      "note": "Preferred fixed export with preserved ISS hierarchy and an 8K USDZ texture cap.",
-      "glb": "assets/models/usdz-mobile-globe-detail-fixed/usdz-mobile-globe-detail-fixed.opt.glb",
-      "usdz": "assets/models/usdz-mobile-globe-detail-fixed/usdz-mobile-globe-detail-fixed-8k.usdz",
+      "product": "GOES + AWE + GNSS",
+      "description": "Preferred fixed export combining GOES globe context, AWE swath data, and GNSS/ISS spatial reference with preserved hierarchy and an 8K USDZ texture cap.",
+      "glb": "usdz-mobile-globe-detail-fixed/usdz-mobile-globe-detail-fixed.opt.glb",
+      "usdz": "usdz-mobile-globe-detail-fixed/usdz-mobile-globe-detail-fixed-8k.usdz",
       "glbSize": "3.9 MB",
       "usdzSize": "14 MB",
       "tags": ["portable", "fixed hierarchy"]
@@ -14,10 +14,10 @@
     {
       "id": "usdz-mobile-globe-detail-iss-hi",
       "name": "USDZ Mobile Globe Detail ISS High",
-      "project": "EOS article",
-      "note": "Higher-detail ISS variant with preserved solar panel and structure geometry.",
-      "glb": "assets/models/usdz-mobile-globe-detail-iss-hi/usdz-mobile-globe-detail-iss-hi.opt.glb",
-      "usdz": "assets/models/usdz-mobile-globe-detail-iss-hi/usdz-mobile-globe-detail-iss-hi-8k.usdz",
+      "product": "GOES + AWE + GNSS",
+      "description": "Higher-detail ISS variant for GOES globe context, AWE swath data, and GNSS/ISS spatial reference, preserving solar panel and structure geometry.",
+      "glb": "usdz-mobile-globe-detail-iss-hi/usdz-mobile-globe-detail-iss-hi.opt.glb",
+      "usdz": "usdz-mobile-globe-detail-iss-hi/usdz-mobile-globe-detail-iss-hi-8k.usdz",
       "glbSize": "8.1 MB",
       "usdzSize": "20 MB",
       "tags": ["portable", "ISS detail"]
@@ -25,10 +25,10 @@
     {
       "id": "usdz-mobile-globe-detail-awe-disp-light",
       "name": "AWE Displacement Light",
-      "project": "EOS article",
-      "note": "Light swath displacement variant using baked MATLAB height data.",
-      "glb": "assets/models/usdz-mobile-globe-detail-awe-disp-light/usdz-mobile-globe-detail-awe-disp-light.opt.glb",
-      "usdz": "assets/models/usdz-mobile-globe-detail-awe-disp-light/usdz-mobile-globe-detail-awe-disp-light-8k.usdz",
+      "product": "GOES + AWE + GNSS",
+      "description": "Light AWE swath displacement variant with GOES globe context and GNSS/ISS spatial reference, using baked MATLAB height data.",
+      "glb": "usdz-mobile-globe-detail-awe-disp-light/usdz-mobile-globe-detail-awe-disp-light.opt.glb",
+      "usdz": "usdz-mobile-globe-detail-awe-disp-light/usdz-mobile-globe-detail-awe-disp-light-8k.usdz",
       "glbSize": "8.3 MB",
       "usdzSize": "26 MB",
       "tags": ["portable", "displacement"]
@@ -36,23 +36,24 @@
     {
       "id": "usdz-mobile-globe-detail-awe-disp-medium",
       "name": "AWE Displacement Medium",
-      "project": "EOS article",
-      "note": "Medium swath displacement variant using baked MATLAB height data.",
-      "glb": "assets/models/usdz-mobile-globe-detail-awe-disp-medium/usdz-mobile-globe-detail-awe-disp-medium.opt.glb",
-      "usdz": "assets/models/usdz-mobile-globe-detail-awe-disp-medium/usdz-mobile-globe-detail-awe-disp-medium-8k.usdz",
+      "product": "GOES + AWE + GNSS",
+      "description": "Medium AWE swath displacement variant with GOES globe context and GNSS/ISS spatial reference, using baked MATLAB height data.",
+      "glb": "usdz-mobile-globe-detail-awe-disp-medium/usdz-mobile-globe-detail-awe-disp-medium.opt.glb",
+      "usdz": "usdz-mobile-globe-detail-awe-disp-medium/usdz-mobile-globe-detail-awe-disp-medium-8k.usdz",
       "glbSize": "8.7 MB",
       "usdzSize": "33 MB",
       "tags": ["portable", "displacement"]
     },
     {
       "id": "usdz-mobile-globe-detail-awe-disp-high",
-      "name": "AWE Displacement High",
-      "project": "EOS article",
-      "note": "High swath displacement variant using baked MATLAB height data, close to the 50 MB USDZ soft cap.",
-      "glb": "assets/models/usdz-mobile-globe-detail-awe-disp-high/usdz-mobile-globe-detail-awe-disp-high.opt.glb",
-      "usdz": "assets/models/usdz-mobile-globe-detail-awe-disp-high/usdz-mobile-globe-detail-awe-disp-high-8k.usdz",
+      "name": "Supercell Storms on March 11th, 2026",
+      "product": "GOES + AWE + GNSS",
+      "description": "Q-line radiance that AWE measured when it flew over a system of storms in the Northeastern USA.",
+      "glb": "usdz-mobile-globe-detail-awe-disp-high/usdz-mobile-globe-detail-awe-disp-high.opt.glb",
+      "usdz": "usdz-mobile-globe-detail-awe-disp-high/usdz-mobile-globe-detail-awe-disp-high-8k.usdz",
       "glbSize": "9.4 MB",
       "usdzSize": "48 MB",
+      "initialZoom": 2,
       "tags": ["portable", "displacement", "near cap"]
     }
   ]

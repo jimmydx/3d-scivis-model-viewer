@@ -74,7 +74,9 @@ assets/models/<asset-id>/
   <asset-id>-8k.usdz
 ```
 
-Update `assets/models/catalog.json` whenever assets are added, removed, renamed, or replaced.
+Update `assets/models/catalog.json` whenever assets are added, removed, renamed, or replaced. Each catalog entry should include `id`, `name`, `product`, `description`, `glb`, `usdz`, `glbSize`, and `usdzSize`; `tags` and `initialZoom` are optional. `initialZoom` defaults to `1`; use `2` to start a model at 2x zoom.
+
+Model paths in `glb` and `usdz` are resolved relative to `assets/models/catalog.json`, so colocated assets should use paths such as `usdz-mobile-globe-detail-fixed/usdz-mobile-globe-detail-fixed.opt.glb`. Absolute `https://...` URLs are also supported when a future deployment moves binaries to a CDN or object-storage host.
 
 Do not add superseded provenance files or oversized workflow-test USDZ files to this deployable catalog.
 
@@ -84,3 +86,12 @@ Do not add superseded provenance files or oversized workflow-test USDZ files to 
 - iPhone and iPad use the paired USDZ from `ios-src` when launching Apple Quick Look.
 - Android AR uses WebXR or Scene Viewer depending on browser and device support.
 - Inline USDZ rendering is not expected; USDZ is an Apple Quick Look handoff format in this site.
+
+## License
+
+This repository uses a dual license:
+
+- Website source code, scripts, and documentation: MIT License.
+- GLB/USDZ model assets, catalog metadata, visual descriptions, and other non-code scientific visualization content: Creative Commons Attribution 4.0 International License (CC BY 4.0).
+
+See `LICENSE.md` for details.
