@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3D Model Viewer for Matlab Data</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer@4.3.1/dist/model-viewer.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8f7;
+      --surface: #ffffff;
+      --surface-soft: #eef3f0;
+      --text: #17201c;
+      --muted: #58655f;
+      --line: #d7dfda;
+      --accent: #006d6f;
+      --accent-strong: #005154;
+      --amber: #9a6500;
+      --danger: #a33422;
+      --shadow: 0 18px 48px rgba(23, 32, 28, 0.12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .header-inner {
+      width: min(1480px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 22px 0 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 1.2rem + 1.6vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.45;
+    }
+
+    .description {
+      margin: 10px 0 0;
+      max-width: 860px;
+      color: #2c3934;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .control-strip {
+      display: flex;
+      align-items: end;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      min-width: min(420px, 100%);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    select,
+    button,
+    .action-link {
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.92rem;
+    }
+
+    select {
+      width: 100%;
+      min-width: 0;
+      padding: 0 38px 0 12px;
+    }
+
+    button,
+    .action-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 13px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    button:hover,
+    .action-link:hover,
+    select:hover {
+      border-color: #aebbb5;
+    }
+
+    .action-link.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .action-link.primary:hover {
+      border-color: var(--accent-strong);
+      background: var(--accent-strong);
+    }
+
+    .toggle {
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.92rem;
+      white-space: nowrap;
+    }
+
+    .toggle input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    main {
+      width: min(1480px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 28px;
+      flex: 1;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .asset-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 8px 24px rgba(23, 32, 28, 0.06);
+    }
+
+    .asset-title {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .asset-title h2 {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+
+    .asset-title span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .asset-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .chips {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: #34423d;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .chip.warning {
+      background: #fff3d9;
+      color: var(--amber);
+    }
+
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+      min-height: 620px;
+    }
+
+    .viewer-panel {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(520px, 1fr) auto;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header,
+    .panel-footer {
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-color: var(--line);
+    }
+
+    .panel-header {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-footer {
+      border-top: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 0.96rem;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      min-height: 520px;
+      background:
+        linear-gradient(90deg, rgba(0, 109, 111, 0.08) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(0, 109, 111, 0.08) 1px, transparent 1px),
+        #f9fbfa;
+      background-size: 48px 48px;
+      --poster-color: #f9fbfa;
+      --progress-bar-color: var(--accent);
+    }
+
+    model-viewer::part(default-ar-button) {
+      border-radius: 8px;
+      background-color: var(--accent);
+    }
+
+    .path-list {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.74rem;
+      line-height: 1.3;
+    }
+
+    .path-list div {
+      overflow-wrap: anywhere;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .header-inner {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .control-strip {
+        justify-content: flex-start;
+      }
+
+      .field {
+        width: 100%;
+      }
+
+      .asset-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .chips {
+        justify-content: flex-start;
+      }
+
+      .viewer-grid {
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header-inner,
+      main {
+        width: min(100% - 20px, 1480px);
+      }
+
+      .header-inner {
+        padding-top: 16px;
+      }
+
+      .control-strip {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+      }
+
+      select,
+      button,
+      .action-link,
+      .toggle {
+        width: 100%;
+      }
+
+      .viewer-panel {
+        grid-template-rows: auto minmax(380px, 64vh) auto;
+      }
+
+      model-viewer {
+        min-height: 380px;
+      }
+
+      .panel-header,
+      .panel-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .status {
+        text-align: left;
+      }
+
+      .actions {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-inner">
+        <div>
+          <h1>3D Model Viewer for Matlab Data</h1>
+          <p class="subtitle">Developed by Jaime Aguilar, Research Scientist at Embry-Riddle Aeronautical University.</p>
+          <p class="description">This website tool visualizes georeferenced data prepared in MATLAB and Blender, pairing optimized GLB assets with Apple Quick Look USDZ deliverables for AR and mobile review.</p>
+        </div>
+        <div class="control-strip" aria-label="Viewer controls">
+          <div class="field">
+            <label for="modelPicker">Model</label>
+            <select id="modelPicker" disabled></select>
+          </div>
+          <label class="toggle" for="rotateToggle">
+            <input id="rotateToggle" type="checkbox" checked>
+            Auto rotate
+          </label>
+          <button id="resetView" type="button">Reset view</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="asset-bar" aria-live="polite">
+        <div>
+          <div class="asset-title">
+            <h2 id="assetName">Loading model catalog</h2>
+            <span id="assetProject"></span>
+          </div>
+          <p id="assetNote" class="asset-note">Loading available GLB/USDZ pairs.</p>
+        </div>
+        <div id="assetChips" class="chips"></div>
+      </section>
+
+      <section class="viewer-grid" aria-label="Model preview">
+        <article class="viewer-panel">
+          <div class="panel-header">
+            <h3>Web GLB Preview</h3>
+            <div id="modelStatus" class="status">Waiting for model</div>
+          </div>
+          <model-viewer
+            id="modelViewer"
+            camera-controls
+            touch-action="pan-y"
+            shadow-intensity="0.75"
+            exposure="1"
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            quick-look-browsers="safari chrome"
+            alt="Optimized GLB model preview with paired USDZ Quick Look handoff">
+          </model-viewer>
+          <div class="panel-footer">
+            <div class="path-list">
+              <div id="glbPath"></div>
+              <div id="usdzPath"></div>
+            </div>
+            <div class="actions">
+              <a id="glbLink" class="action-link" href="">Open GLB</a>
+              <a id="usdzLink" class="action-link primary" href="" rel="ar">Open USDZ</a>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const catalogUrl = "assets/models/catalog.json";
+    const picker = document.querySelector("#modelPicker");
+    const rotateToggle = document.querySelector("#rotateToggle");
+    const resetView = document.querySelector("#resetView");
+    const modelViewer = document.querySelector("#modelViewer");
+    const modelStatus = document.querySelector("#modelStatus");
+    const glbPath = document.querySelector("#glbPath");
+    const usdzPath = document.querySelector("#usdzPath");
+    const glbLink = document.querySelector("#glbLink");
+    const usdzLink = document.querySelector("#usdzLink");
+    const assetName = document.querySelector("#assetName");
+    const assetProject = document.querySelector("#assetProject");
+    const assetNote = document.querySelector("#assetNote");
+    const assetChips = document.querySelector("#assetChips");
+    let models = [];
+
+    function urlFor(path) {
+      return encodeURI(path);
+    }
+
+    function setStatus(element, text, isError = false) {
+      element.textContent = text;
+      element.classList.toggle("error", isError);
+    }
+
+    function setAutoRotate(enabled) {
+      modelViewer.toggleAttribute("auto-rotate", enabled);
+    }
+
+    function resetCamera() {
+      modelViewer.cameraOrbit = "0deg 75deg auto";
+      modelViewer.cameraTarget = "auto auto auto";
+      modelViewer.fieldOfView = "45deg";
+      if (typeof modelViewer.resetTurntableRotation === "function") {
+        modelViewer.resetTurntableRotation();
+      }
+    }
+
+    function renderChips(model) {
+      assetChips.textContent = "";
+      const chips = [
+        `GLB ${model.glbSize}`,
+        `USDZ ${model.usdzSize}`,
+        ...(model.tags || [])
+      ];
+
+      for (const chipText of chips) {
+        const chip = document.createElement("span");
+        chip.className = chipText.toLowerCase().includes("near cap") ? "chip warning" : "chip";
+        chip.textContent = chipText;
+        assetChips.append(chip);
+      }
+    }
+
+    function setModel(model) {
+      const glbUrl = urlFor(model.glb);
+      const usdzUrl = urlFor(model.usdz);
+
+      assetName.textContent = model.name;
+      assetProject.textContent = model.project;
+      assetNote.textContent = model.note;
+      renderChips(model);
+
+      glbPath.textContent = model.glb;
+      usdzPath.textContent = model.usdz;
+      glbLink.href = glbUrl;
+      usdzLink.href = usdzUrl;
+
+      setStatus(modelStatus, "Loading GLB preview");
+      modelViewer.setAttribute("alt", `${model.name} GLB preview with paired USDZ Quick Look handoff`);
+      modelViewer.setAttribute("src", glbUrl);
+      modelViewer.setAttribute("ios-src", usdzUrl);
+      setAutoRotate(rotateToggle.checked);
+      resetCamera();
+    }
+
+    function selectedModel() {
+      return models.find((model) => model.id === picker.value) || models[0];
+    }
+
+    function populatePicker() {
+      picker.textContent = "";
+      for (const model of models) {
+        const option = document.createElement("option");
+        option.value = model.id;
+        option.textContent = model.name;
+        picker.append(option);
+      }
+      picker.disabled = models.length === 0;
+    }
+
+    async function loadCatalog() {
+      try {
+        const response = await fetch(catalogUrl, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Catalog request failed: ${response.status}`);
+        }
+        const catalog = await response.json();
+        models = Array.isArray(catalog.models) ? catalog.models : [];
+        if (models.length === 0) {
+          throw new Error("Catalog has no models");
+        }
+        populatePicker();
+        setModel(models[0]);
+      } catch (error) {
+        console.error(error);
+        assetName.textContent = "Catalog unavailable";
+        assetProject.textContent = "";
+        assetNote.textContent = "Run this page through a local or hosted HTTP server so the model catalog can load.";
+        setStatus(modelStatus, "Catalog failed to load", true);
+      }
+    }
+
+    modelViewer.addEventListener("load", () => {
+      setStatus(modelStatus, "GLB loaded; USDZ linked for Apple Quick Look");
+    });
+
+    modelViewer.addEventListener("error", () => {
+      setStatus(modelStatus, "GLB failed to load", true);
+    });
+
+    picker.addEventListener("change", () => {
+      setModel(selectedModel());
+    });
+
+    rotateToggle.addEventListener("change", () => {
+      setAutoRotate(rotateToggle.checked);
+    });
+
+    resetView.addEventListener("click", resetCamera);
+
+    loadCatalog();
+  </script>
+</body>
+</html>
