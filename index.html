@@ -217,6 +217,33 @@
       min-width: min(420px, 100%);
     }
 
+    .select-field {
+      position: relative;
+    }
+
+    .select-field::before,
+    .select-field::after {
+      content: "";
+      position: absolute;
+      right: 15px;
+      width: 7px;
+      height: 7px;
+      border-right: 1.7px solid currentColor;
+      border-bottom: 1.7px solid currentColor;
+      color: var(--header-muted);
+      pointer-events: none;
+    }
+
+    .select-field::before {
+      bottom: 22px;
+      transform: rotate(225deg);
+    }
+
+    .select-field::after {
+      bottom: 13px;
+      transform: rotate(45deg);
+    }
+
     label {
       display: block;
       margin-bottom: 6px;
@@ -242,7 +269,9 @@
     select {
       width: 100%;
       min-width: 0;
-      padding: 0 38px 0 12px;
+      padding: 0 42px 0 12px;
+      appearance: none;
+      -webkit-appearance: none;
     }
 
     button,
@@ -719,7 +748,7 @@
         <div class="header-tools">
           <p class="description">This website tool visualizes georeferenced data prepared in MATLAB and Blender, pairing optimized GLB assets with Apple Quick Look USDZ deliverables for AR and mobile review.</p>
           <div class="control-strip" aria-label="Model and theme controls">
-            <div class="field">
+            <div class="field select-field">
               <label for="modelPicker">Model</label>
               <select id="modelPicker" disabled></select>
             </div>
@@ -777,6 +806,9 @@
               touch-action="pan-y"
               shadow-intensity="0.75"
               exposure="1"
+              poster="assets/model-poster.svg"
+              loading="eager"
+              reveal="manual"
               ar
               ar-modes="webxr scene-viewer quick-look"
               quick-look-browsers="safari chrome"
@@ -844,8 +876,30 @@
     const assetProject = document.querySelector("#assetProject");
     const assetNote = document.querySelector("#assetNote");
     const assetChips = document.querySelector("#assetChips");
+    const fallbackPosterUrl = "assets/model-poster.svg";
     let models = [];
     let theme = localStorage.getItem("theme") || "dark";
+    let modelSwitchToken = 0;
+    let activePosterObjectUrl = "";
+
+    function isAppleMobileDevice() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    function nextAnimationFrame() {
+      return new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+
+    async function configureModelViewerRuntime() {
+      await customElements.whenDefined("model-viewer");
+      const ModelViewerElement = customElements.get("model-viewer");
+      if (ModelViewerElement) {
+        const cacheSize = isAppleMobileDevice() ? 1 : 3;
+        ModelViewerElement.modelCacheSize = cacheSize;
+        modelViewer.dataset.modelCacheSize = String(cacheSize);
+      }
+    }
 
     function resolveAssetUrl(path) {
       return new URL(path, catalogUrl).href;
@@ -924,7 +978,74 @@
       }
     }
 
-    function setModel(model) {
+    function isObjectUrl(url) {
+      return typeof url === "string" && url.startsWith("blob:");
+    }
+
+    function clearActivePosterObjectUrl() {
+      if (activePosterObjectUrl) {
+        URL.revokeObjectURL(activePosterObjectUrl);
+        activePosterObjectUrl = "";
+      }
+    }
+
+    async function captureCurrentModelPoster() {
+      if (!modelViewer.loaded || typeof modelViewer.toBlob !== "function" || modelViewer.modelIsVisible === false) {
+        return "";
+      }
+
+      try {
+        const blob = await modelViewer.toBlob({
+          mimeType: "image/png",
+          idealAspect: true
+        });
+        return blob ? URL.createObjectURL(blob) : "";
+      } catch (error) {
+        console.warn("Unable to capture current model poster", error);
+        return "";
+      }
+    }
+
+    function showLoadingPoster(posterUrl = fallbackPosterUrl) {
+      clearActivePosterObjectUrl();
+      const nextPosterUrl = posterUrl || fallbackPosterUrl;
+      if (isObjectUrl(nextPosterUrl)) {
+        activePosterObjectUrl = nextPosterUrl;
+      }
+      modelViewer.dataset.posterSource = isObjectUrl(nextPosterUrl) ? "captured-frame" : "fallback";
+      modelViewer.setAttribute("poster", nextPosterUrl);
+      modelViewer.setAttribute("reveal", "manual");
+      if (typeof modelViewer.showPoster === "function") {
+        modelViewer.showPoster();
+      }
+    }
+
+    function dismissLoadingPoster() {
+      if (typeof modelViewer.dismissPoster === "function") {
+        modelViewer.dismissPoster();
+      }
+    }
+
+    async function releaseCurrentModelForSwitch() {
+      if (!isAppleMobileDevice() || (!modelViewer.hasAttribute("src") && !modelViewer.hasAttribute("ios-src"))) {
+        return;
+      }
+
+      modelViewer.removeAttribute("src");
+      modelViewer.removeAttribute("ios-src");
+      await nextAnimationFrame();
+    }
+
+    async function setModel(model) {
+      const switchToken = ++modelSwitchToken;
+      const posterUrl = await captureCurrentModelPoster();
+      if (switchToken !== modelSwitchToken) {
+        if (isObjectUrl(posterUrl)) {
+          URL.revokeObjectURL(posterUrl);
+        }
+        return;
+      }
+
       const glbUrl = resolveAssetUrl(model.glb);
       const usdzUrl = resolveAssetUrl(model.usdz);
 
@@ -940,12 +1061,20 @@
       glbLink.download = filenameFor(model.glb);
       usdzLink.download = filenameFor(model.usdz);
 
-      setStatus(modelStatus, "Loading GLB preview");
+      showLoadingPoster(posterUrl);
+      setStatus(modelStatus, "Preparing GLB preview");
       modelViewer.setAttribute("alt", `${model.name} GLB preview with paired USDZ Quick Look handoff`);
-      modelViewer.setAttribute("src", glbUrl);
-      modelViewer.setAttribute("ios-src", usdzUrl);
       setAutoRotate(rotateToggle.checked);
       setBaseCameraPose();
+      await releaseCurrentModelForSwitch();
+
+      if (switchToken !== modelSwitchToken) {
+        return;
+      }
+
+      setStatus(modelStatus, "Loading GLB preview");
+      modelViewer.setAttribute("src", glbUrl);
+      modelViewer.setAttribute("ios-src", usdzUrl);
     }
 
     function selectedModel() {
@@ -975,7 +1104,7 @@
           throw new Error("Catalog has no models");
         }
         populatePicker();
-        setModel(models[0]);
+        await setModel(models[0]);
       } catch (error) {
         console.error(error);
         assetName.textContent = "Catalog unavailable";
@@ -987,11 +1116,26 @@
 
     modelViewer.addEventListener("load", () => {
       resetCamera(selectedModel());
-      setStatus(modelStatus, "GLB loaded; USDZ linked for Apple Quick Look");
+      requestAnimationFrame(() => {
+        dismissLoadingPoster();
+        setStatus(modelStatus, "GLB loaded; USDZ linked for Apple Quick Look");
+      });
+    });
+
+    modelViewer.addEventListener("poster-dismissed", () => {
+      clearActivePosterObjectUrl();
+      modelViewer.setAttribute("poster", fallbackPosterUrl);
     });
 
     modelViewer.addEventListener("error", () => {
       setStatus(modelStatus, "GLB failed to load", true);
+    });
+
+    modelViewer.addEventListener("progress", (event) => {
+      const progress = Math.round((event.detail?.totalProgress || 0) * 100);
+      if (progress > 0 && progress < 100) {
+        setStatus(modelStatus, `Loading GLB preview ${progress}%`);
+      }
     });
 
     picker.addEventListener("change", () => {
@@ -1008,8 +1152,13 @@
       applyTheme(theme === "dark" ? "light" : "dark");
     });
 
-    applyTheme(theme);
-    loadCatalog();
+    async function init() {
+      applyTheme(theme);
+      await configureModelViewerRuntime();
+      await loadCatalog();
+    }
+
+    init();
   </script>
 </body>
 </html>

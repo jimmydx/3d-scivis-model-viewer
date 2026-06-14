@@ -86,6 +86,8 @@ Do not add superseded provenance files or oversized workflow-test USDZ files to 
 - iPhone and iPad use the paired USDZ from `ios-src` when launching Apple Quick Look.
 - Android AR uses WebXR or Scene Viewer depending on browser and device support.
 - Inline USDZ rendering is not expected; USDZ is an Apple Quick Look handoff format in this site.
+- The page sets `<model-viewer>`'s glTF cache lower on mobile Apple devices so model switching does not retain several heavy GLB files in Safari memory.
+- The viewer captures the current GLB frame before a model switch and uses that image as the temporary poster while the next GLB is fetched and prepared. A lightweight SVG poster is used only for first load and capture fallback.
 
 ## License
 
