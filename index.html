@@ -798,6 +798,15 @@
                   Auto rotate
                 </label>
                 <button id="resetView" type="button">Reset view</button>
+                <button id="reloadModel" type="button" aria-label="Reload selected model">
+                  <svg class="button-icon" aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M21 12a9 9 0 0 1-15.4 6.4"></path>
+                    <path d="M3 12A9 9 0 0 1 18.4 5.6"></path>
+                    <path d="M18.4 2.8v2.8h-2.8"></path>
+                    <path d="M5.6 21.2v-2.8h2.8"></path>
+                  </svg>
+                  Reload model
+                </button>
               </div>
             </div>
             <model-viewer
@@ -863,6 +872,7 @@
     const picker = document.querySelector("#modelPicker");
     const rotateToggle = document.querySelector("#rotateToggle");
     const resetView = document.querySelector("#resetView");
+    const reloadModel = document.querySelector("#reloadModel");
     const themeToggle = document.querySelector("#themeToggle");
     const themeIcon = document.querySelector("#themeIcon");
     const themeLabel = document.querySelector("#themeLabel");
@@ -907,6 +917,16 @@
 
     function filenameFor(path) {
       return new URL(path, catalogUrl).pathname.split("/").pop() || "";
+    }
+
+    function withReloadToken(url, forceReload) {
+      if (!forceReload) {
+        return url;
+      }
+
+      const nextUrl = new URL(url);
+      nextUrl.searchParams.set("reload", Date.now().toString(36));
+      return nextUrl.href;
     }
 
     function setStatus(element, text, isError = false) {
@@ -1026,17 +1046,25 @@
       }
     }
 
-    async function releaseCurrentModelForSwitch() {
-      if (!isAppleMobileDevice() || (!modelViewer.hasAttribute("src") && !modelViewer.hasAttribute("ios-src"))) {
+    async function releaseCurrentModelForSwitch(forceRelease = false) {
+      if ((!forceRelease && !isAppleMobileDevice()) || (!modelViewer.hasAttribute("src") && !modelViewer.hasAttribute("ios-src"))) {
         return;
       }
 
       modelViewer.removeAttribute("src");
       modelViewer.removeAttribute("ios-src");
       await nextAnimationFrame();
+      if (forceRelease) {
+        await nextAnimationFrame();
+      }
     }
 
-    async function setModel(model) {
+    async function setModel(model, options = {}) {
+      if (!model) {
+        return;
+      }
+
+      const forceReload = Boolean(options.forceReload);
       const switchToken = ++modelSwitchToken;
       const posterUrl = await captureCurrentModelPoster();
       if (switchToken !== modelSwitchToken) {
@@ -1046,8 +1074,10 @@
         return;
       }
 
-      const glbUrl = resolveAssetUrl(model.glb);
-      const usdzUrl = resolveAssetUrl(model.usdz);
+      const baseGlbUrl = resolveAssetUrl(model.glb);
+      const baseUsdzUrl = resolveAssetUrl(model.usdz);
+      const glbUrl = withReloadToken(baseGlbUrl, forceReload);
+      const usdzUrl = withReloadToken(baseUsdzUrl, forceReload);
 
       assetName.textContent = model.name;
       assetProject.textContent = model.product || model.project || "";
@@ -1056,17 +1086,17 @@
 
       glbPath.textContent = model.glb;
       usdzPath.textContent = model.usdz;
-      glbLink.href = glbUrl;
-      usdzLink.href = usdzUrl;
+      glbLink.href = baseGlbUrl;
+      usdzLink.href = baseUsdzUrl;
       glbLink.download = filenameFor(model.glb);
       usdzLink.download = filenameFor(model.usdz);
 
       showLoadingPoster(posterUrl);
-      setStatus(modelStatus, "Preparing GLB preview");
+      setStatus(modelStatus, forceReload ? "Reloading GLB preview" : "Preparing GLB preview");
       modelViewer.setAttribute("alt", `${model.name} GLB preview with paired USDZ Quick Look handoff`);
       setAutoRotate(rotateToggle.checked);
       setBaseCameraPose();
-      await releaseCurrentModelForSwitch();
+      await releaseCurrentModelForSwitch(forceReload);
 
       if (switchToken !== modelSwitchToken) {
         return;
@@ -1147,6 +1177,10 @@
     });
 
     resetView.addEventListener("click", () => resetCamera());
+
+    reloadModel.addEventListener("click", () => {
+      setModel(selectedModel(), { forceReload: true });
+    });
 
     themeToggle.addEventListener("click", () => {
       applyTheme(theme === "dark" ? "light" : "dark");
